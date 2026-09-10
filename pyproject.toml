@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kyozitu-news-bot"
+version = "0.1.0"
+description = "Discordで完全フィクションの虚実ニュースをランダム配信するBot"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+  { name = "dtmpm3485" }
+]
+keywords = ["discord", "bot", "japanese", "fiction", "news", "go"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Go",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/dtmpm3485/kyozitu-News-bot"
+Repository = "https://github.com/dtmpm3485/kyozitu-News-bot"
+Issues = "https://github.com/dtmpm3485/kyozitu-News-bot/issues"
+
+[project.scripts]
+kyozitu-news-bot = "kyozitu_news_bot:main"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
