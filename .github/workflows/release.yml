@@ -78,21 +78,35 @@ jobs:
           - goos: linux
             goarch: amd64
             ext: ""
+            buildmode: ""
           - goos: linux
             goarch: arm64
             ext: ""
+            buildmode: ""
+          - goos: android
+            goarch: amd64
+            ext: ""
+            buildmode: "-buildmode=pie"
+          - goos: android
+            goarch: arm64
+            ext: ""
+            buildmode: "-buildmode=pie"
           - goos: windows
             goarch: amd64
             ext: ".exe"
+            buildmode: ""
           - goos: windows
             goarch: arm64
             ext: ".exe"
+            buildmode: ""
           - goos: darwin
             goarch: amd64
             ext: ""
+            buildmode: ""
           - goos: darwin
             goarch: arm64
             ext: ""
+            buildmode: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -106,9 +120,10 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: "0"
+          BUILDMODE: ${{ matrix.buildmode }}
         run: |
           mkdir -p dist
-          go build -trimpath -ldflags="-s -w" -o "dist/kyozitu-news-bot-${GOOS}-${GOARCH}${{ matrix.ext }}" .
+          go build ${BUILDMODE} -trimpath -ldflags="-s -w" -o "dist/kyozitu-news-bot-${GOOS}-${GOARCH}${{ matrix.ext }}" .
       - uses: actions/upload-artifact@v4
         with:
           name: go-${{ matrix.goos }}-${{ matrix.goarch }}
