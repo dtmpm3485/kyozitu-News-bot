@@ -98,6 +98,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
+          cache: false
+      - name: Resolve dependencies
+        run: go mod tidy
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
