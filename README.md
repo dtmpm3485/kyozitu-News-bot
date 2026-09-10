@@ -2,7 +2,9 @@
 
 その日にDiscordで話したユーザーの中からランダムに1人を選び、完全フィクションの「虚実ニュース」を1分〜3時間のランダム間隔で投稿するBotです。
 
-![虚実ニュースbotの投稿例](assets/kyozitu-news-bot.png)
+<p align="center">
+  <img src="./assets/kyozitu-news-bot.svg" alt="虚実ニュースbotの投稿例" width="100%">
+</p>
 
 投稿例:
 
