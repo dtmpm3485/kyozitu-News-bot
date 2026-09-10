@@ -1,0 +1,1 @@
+虚実ニュースbot README image asset directory.
