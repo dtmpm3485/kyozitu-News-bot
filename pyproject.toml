@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kyozitu-news-bot"
-version = "0.1.5"
+version = "0.1.6"
 description = "Discordで完全フィクションの虚実ニュースをランダム配信するBot"
 readme = "README.md"
 requires-python = ">=3.10"
