@@ -12,27 +12,48 @@ on:
         default: "0.1.0"
 
 jobs:
-  create-tag:
-    if: github.event_name == 'workflow_dispatch'
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Create release tag
-        env:
-          VERSION: ${{ inputs.version }}
+      - id: meta
+        name: Resolve version
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+      - name: Create tag when needed
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists; reusing it."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "${TAG}"
+            git push origin "${TAG}"
+          fi
 
   build-go:
-    if: github.event_name == 'push'
     name: Go ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -74,9 +95,8 @@ jobs:
           path: dist/*
 
   github-release:
-    if: github.event_name == 'push'
     name: GitHub Release
-    needs: build-go
+    needs: [prepare, build-go]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -93,17 +113,39 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --generate-notes --verify-tag
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" dist/* --repo "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${TAG}" dist/* --repo "${GITHUB_REPOSITORY}" --generate-notes --verify-tag
+          fi
 
   build-python:
-    if: github.event_name == 'push'
     name: Build PyPI package
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Set package version
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+          version = os.environ["VERSION"]
+          p = pathlib.Path("pyproject.toml")
+          s = p.read_text()
+          s = re.sub(r'^version = ".*"$', f'version = "{version}"', s, flags=re.M)
+          p.write_text(s)
+          p = pathlib.Path("python/kyozitu_news_bot/__init__.py")
+          s = p.read_text()
+          s = re.sub(r'^__version__ = ".*"$', f'__version__ = "{version}"', s, flags=re.M)
+          p.write_text(s)
+          PY
       - run: python -m pip install --upgrade build
       - run: python -m build
       - uses: actions/upload-artifact@v4
@@ -112,9 +154,8 @@ jobs:
           path: dist/*
 
   pypi:
-    if: github.event_name == 'push'
     name: Publish to PyPI
-    needs: [github-release, build-python]
+    needs: [prepare, github-release, build-python]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
