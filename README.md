@@ -2,6 +2,8 @@
 
 その日にDiscordで話したユーザーの中からランダムに1人を選び、完全フィクションの「虚実ニュース」を1分〜3時間のランダム間隔で投稿するBotです。
 
+![虚実ニュースbotの投稿例](assets/kyozitu-news-bot.png)
+
 投稿例:
 
 ```text
@@ -21,7 +23,7 @@ pip install kyozitu-news-bot
 
 初回起動時に、使用しているOS/CPUに合うGo製Bot本体をGitHub Releasesから自動取得します。
 
-対応予定: Windows / Linux / macOS の amd64・arm64。Termuxのarm64環境ではLinux arm64版を使用します。
+対応: Windows / Linux / macOS の amd64・arm64、およびTermux / Android arm64。
 
 ## 起動方法
 
@@ -56,6 +58,16 @@ kyozitu-news-bot
 - 投稿後、次回時刻をもう一度1分〜3時間からランダム決定します。
 - 日付判定は日本時間です。
 - 状態はローカルJSONに保存され、Botを再起動しても保持されます。
+
+## コマンド
+
+- `/news test` - 今すぐテストニュースを投稿
+- `/news on` - 自動投稿をON
+- `/news off` - 自動投稿をOFF
+- `/news status` - 状態、候補人数、次回投稿時刻などを表示
+- `/news channel` - 投稿先チャンネルを固定
+- `/news interval` - 投稿間隔を変更
+- `/news reset` - 今日の候補ユーザーをリセット
 
 ## Discord Botの権限
 
