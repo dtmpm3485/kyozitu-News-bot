@@ -334,9 +334,13 @@ func dataPath() (string, error) {
 }
 
 func isDNSError(err error) bool {
-	if err == nil { return false }
+	if err == nil {
+		return false
+	}
 	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) { return true }
+	if errors.As(err, &dnsErr) {
+		return true
+	}
 	text := strings.ToLower(err.Error())
 	return strings.Contains(text, "lookup ") || strings.Contains(text, ":53")
 }
@@ -345,7 +349,9 @@ func applyFallbackDNS(dg *discordgo.Session) {
 	resolver := &net.Resolver{PreferGo: true, Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 		d := net.Dialer{Timeout: 5 * time.Second}
 		conn, err := d.DialContext(ctx, "udp", "1.1.1.1:53")
-		if err == nil { return conn, nil }
+		if err == nil {
+			return conn, nil
+		}
 		return d.DialContext(ctx, "udp", "8.8.8.8:53")
 	}}
 	dialer := &net.Dialer{Timeout: 15 * time.Second, KeepAlive: 30 * time.Second, Resolver: resolver}
@@ -375,63 +381,101 @@ func ephemeral(s *discordgo.Session, i *discordgo.InteractionCreate, text string
 
 func optionMap(options []*discordgo.ApplicationCommandInteractionDataOption) map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	m := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-	for _, o := range options { m[o.Name] = o }
+	for _, o := range options {
+		m[o.Name] = o
+	}
 	return m
 }
 
 func handleNewsCommand(store *Store, s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.GuildID == "" || i.Member == nil { ephemeral(s, i, "このコマンドはサーバー内で使ってください。"); return }
+	if i.GuildID == "" || i.Member == nil {
+		ephemeral(s, i, "このコマンドはサーバー内で使ってください。")
+		return
+	}
 	if i.Member.Permissions&discordgo.PermissionManageGuild == 0 && i.Member.Permissions&discordgo.PermissionAdministrator == 0 {
 		ephemeral(s, i, "サーバー管理権限が必要です。")
 		return
 	}
 	data := i.ApplicationCommandData()
-	if data.Name != "news" || len(data.Options) == 0 { return }
+	if data.Name != "news" || len(data.Options) == 0 {
+		return
+	}
 	sub := data.Options[0]
 	now := time.Now()
 
 	switch sub.Name {
 	case "on":
-		if err := store.setEnabled(i.GuildID, true, now); err != nil { ephemeral(s, i, "設定保存に失敗しました: "+err.Error()); return }
+		if err := store.setEnabled(i.GuildID, true, now); err != nil {
+			ephemeral(s, i, "設定保存に失敗しました: "+err.Error())
+			return
+		}
 		ephemeral(s, i, "虚実ニュースの自動投稿をONにしました。")
 	case "off":
-		if err := store.setEnabled(i.GuildID, false, now); err != nil { ephemeral(s, i, "設定保存に失敗しました: "+err.Error()); return }
+		if err := store.setEnabled(i.GuildID, false, now); err != nil {
+			ephemeral(s, i, "設定保存に失敗しました: "+err.Error())
+			return
+		}
 		ephemeral(s, i, "虚実ニュースの自動投稿をOFFにしました。")
 	case "status":
 		st := store.status(i.GuildID, now)
 		next := "未定（候補ユーザーの発言待ち）"
-		if st.NextPostAt > 0 { next = fmt.Sprintf("<t:%d:F>（<t:%d:R>）", st.NextPostAt, st.NextPostAt) }
+		if st.NextPostAt > 0 {
+			next = fmt.Sprintf("<t:%d:F>（<t:%d:R>）", st.NextPostAt, st.NextPostAt)
+		}
 		channel := "自動（選ばれたユーザーが最後に話したチャンネル）"
-		if st.FixedChannelID != "" { channel = "<#" + st.FixedChannelID + ">" }
-		ephemeral(s, i, fmt.Sprintf("自動投稿: %s\n候補ユーザー: %d人\n投稿間隔: %d〜%d分\n投稿先: %s\n次回: %s", map[bool]string{true:"ON", false:"OFF"}[st.Enabled], st.CandidateCount, int(st.MinDelay.Minutes()), int(st.MaxDelay.Minutes()), channel, next))
+		if st.FixedChannelID != "" {
+			channel = "<#" + st.FixedChannelID + ">"
+		}
+		ephemeral(s, i, fmt.Sprintf("自動投稿: %s\n候補ユーザー: %d人\n投稿間隔: %d〜%d分\n投稿先: %s\n次回: %s", map[bool]string{true: "ON", false: "OFF"}[st.Enabled], st.CandidateCount, int(st.MinDelay.Minutes()), int(st.MaxDelay.Minutes()), channel, next))
 	case "channel":
 		channelID := i.ChannelID
 		m := optionMap(sub.Options)
-		if o, ok := m["target"]; ok { channelID = o.StringValue() }
-		if err := store.setChannel(i.GuildID, channelID, now); err != nil { ephemeral(s, i, "設定保存に失敗しました: "+err.Error()); return }
+		if o, ok := m["target"]; ok {
+			channelID = o.StringValue()
+		}
+		if err := store.setChannel(i.GuildID, channelID, now); err != nil {
+			ephemeral(s, i, "設定保存に失敗しました: "+err.Error())
+			return
+		}
 		ephemeral(s, i, "投稿先を <#"+channelID+"> に固定しました。")
 	case "interval":
 		m := optionMap(sub.Options)
-		minOpt, ok1 := m["min"]; maxOpt, ok2 := m["max"]
-		if !ok1 || !ok2 { ephemeral(s, i, "min と max を指定してください。"); return }
+		minOpt, ok1 := m["min"]
+		maxOpt, ok2 := m["max"]
+		if !ok1 || !ok2 {
+			ephemeral(s, i, "min と max を指定してください。")
+			return
+		}
 		minM, maxM := minOpt.IntValue(), maxOpt.IntValue()
-		if err := store.setInterval(i.GuildID, minM, maxM, now); err != nil { ephemeral(s, i, "1〜1440分の範囲で、min <= max にしてください。"); return }
+		if err := store.setInterval(i.GuildID, minM, maxM, now); err != nil {
+			ephemeral(s, i, "1〜1440分の範囲で、min <= max にしてください。")
+			return
+		}
 		ephemeral(s, i, fmt.Sprintf("投稿間隔を %d〜%d分 に変更しました。次回時刻も再抽選します。", minM, maxM))
 	case "reset":
-		if err := store.resetUsers(i.GuildID, now); err != nil { ephemeral(s, i, "リセットに失敗しました: "+err.Error()); return }
+		if err := store.resetUsers(i.GuildID, now); err != nil {
+			ephemeral(s, i, "リセットに失敗しました: "+err.Error())
+			return
+		}
 		ephemeral(s, i, "今日の候補ユーザーをリセットしました。")
 	case "test":
 		u, channelID, ok := store.testUser(i.GuildID, now)
-		if !ok { ephemeral(s, i, "まだ候補ユーザーがいません。誰かが一度発言してから試してください。"); return }
-		if _, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Content: buildNews(u.UserID), AllowedMentions: &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}, Users: []string{u.UserID}}}); err != nil {
-			ephemeral(s, i, "投稿に失敗しました: "+err.Error()); return
+		if !ok {
+			ephemeral(s, i, "まだ候補ユーザーがいません。誰かが一度発言してから試してください。")
+			return
+		}
+		if _, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Content: buildRichNews(i.GuildID, u.UserID), AllowedMentions: &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}, Users: []string{u.UserID}}}); err != nil {
+			ephemeral(s, i, "投稿に失敗しました: "+err.Error())
+			return
 		}
 		ephemeral(s, i, "テストニュースを投稿しました。")
 	}
 }
 
 func registerGuildCommand(s *discordgo.Session, guildID string) {
-	if s.State == nil || s.State.User == nil || guildID == "" { return }
+	if s.State == nil || s.State.User == nil || guildID == "" {
+		return
+	}
 	if _, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, guildID, []*discordgo.ApplicationCommand{newsCommand()}); err != nil {
 		log.Printf("failed to register /news for guild=%s: %v", guildID, err)
 	}
@@ -439,24 +483,40 @@ func registerGuildCommand(s *discordgo.Session, guildID string) {
 
 func main() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
-	if token == "" { log.Fatal("DISCORD_BOT_TOKEN is required") }
+	if token == "" {
+		log.Fatal("DISCORD_BOT_TOKEN is required")
+	}
 	loc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil { loc = time.FixedZone("JST", 9*60*60) }
+	if err != nil {
+		loc = time.FixedZone("JST", 9*60*60)
+	}
 	path, err := dataPath()
-	if err != nil { log.Fatalf("failed to resolve data directory: %v", err) }
+	if err != nil {
+		log.Fatalf("failed to resolve data directory: %v", err)
+	}
 	store, err := newStore(path, loc)
-	if err != nil { log.Fatalf("failed to load state: %v", err) }
+	if err != nil {
+		log.Fatalf("failed to load state: %v", err)
+	}
 
 	dg, err := discordgo.New("Bot " + token)
-	if err != nil { log.Fatalf("failed to create Discord session: %v", err) }
+	if err != nil {
+		log.Fatalf("failed to create Discord session: %v", err)
+	}
 	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages
 
 	dg.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.GuildID == "" || m.Author == nil || m.Author.Bot { return }
+		if m.GuildID == "" || m.Author == nil || m.Author.Bot {
+			return
+		}
 		display := m.Author.GlobalName
-		if display == "" { display = m.Author.Username }
+		if display == "" {
+			display = m.Author.Username
+		}
 		u := TrackedUser{UserID: m.Author.ID, Username: m.Author.Username, DisplayName: display, ChannelID: m.ChannelID, LastSeen: time.Now().Unix()}
-		if err := store.touch(m.GuildID, u, time.Now()); err != nil { log.Printf("failed to save activity: %v", err) }
+		if err := store.touch(m.GuildID, u, time.Now()); err != nil {
+			log.Printf("failed to save activity: %v", err)
+		}
 	})
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) { handleNewsCommand(store, s, i) })
 	dg.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) { registerGuildCommand(s, g.ID) })
@@ -466,12 +526,18 @@ func main() {
 		if isDNSError(err) {
 			log.Printf("system DNS failed; retrying with fallback DNS (1.1.1.1 / 8.8.8.8)")
 			applyFallbackDNS(dg)
-			if retryErr := dg.Open(); retryErr != nil { log.Fatalf("failed to connect to Discord after DNS fallback: %v", retryErr) }
-		} else { log.Fatalf("failed to connect to Discord: %v", err) }
+			if retryErr := dg.Open(); retryErr != nil {
+				log.Fatalf("failed to connect to Discord after DNS fallback: %v", retryErr)
+			}
+		} else {
+			log.Fatalf("failed to connect to Discord: %v", err)
+		}
 	}
 	defer dg.Close()
 
-	for _, g := range dg.State.Guilds { registerGuildCommand(dg, g.ID) }
+	for _, g := range dg.State.Guilds {
+		registerGuildCommand(dg, g.ID)
+	}
 	log.Printf("%s started", appName)
 	log.Printf("state: %s", path)
 
@@ -484,10 +550,15 @@ func main() {
 		select {
 		case now := <-ticker.C:
 			items, err := store.due(now)
-			if err != nil { log.Printf("scheduler error: %v", err); continue }
+			if err != nil {
+				log.Printf("scheduler error: %v", err)
+				continue
+			}
 			for _, item := range items {
-				_, err := dg.ChannelMessageSendComplex(item.ChannelID, &discordgo.MessageSend{Content: buildNews(item.User.UserID), AllowedMentions: &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}, Users: []string{item.User.UserID}}})
-				if err != nil { log.Printf("failed to send news guild=%s channel=%s: %v", item.GuildID, item.ChannelID, err) }
+				_, err := dg.ChannelMessageSendComplex(item.ChannelID, &discordgo.MessageSend{Content: buildRichNews(item.GuildID, item.User.UserID), AllowedMentions: &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}, Users: []string{item.User.UserID}}})
+				if err != nil {
+					log.Printf("failed to send news guild=%s channel=%s: %v", item.GuildID, item.ChannelID, err)
+				}
 			}
 		case <-done:
 			log.Printf("%s stopped", appName)
