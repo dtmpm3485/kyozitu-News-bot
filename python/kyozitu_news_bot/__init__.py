@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 __all__ = ["run"]
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 _REPO = "dtmpm3485/kyozitu-News-bot"
 
