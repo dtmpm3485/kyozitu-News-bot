@@ -73,6 +73,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - goos: linux
@@ -83,10 +84,6 @@ jobs:
             goarch: arm64
             ext: ""
             buildmode: ""
-          - goos: android
-            goarch: amd64
-            ext: ""
-            buildmode: "-buildmode=pie"
           - goos: android
             goarch: arm64
             ext: ""
