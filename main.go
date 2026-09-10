@@ -1,19 +1,24 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -258,6 +263,53 @@ func dataPath() (string, error) {
 	return filepath.Join(cfg, "kyozitu-news-bot", "state.json"), nil
 }
 
+func isDNSError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return true
+	}
+	text := strings.ToLower(err.Error())
+	return strings.Contains(text, "lookup ") || strings.Contains(text, ":53")
+}
+
+func applyFallbackDNS(dg *discordgo.Session) {
+	resolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{Timeout: 5 * time.Second}
+			conn, err := d.DialContext(ctx, "udp", "1.1.1.1:53")
+			if err == nil {
+				return conn, nil
+			}
+			return d.DialContext(ctx, "udp", "8.8.8.8:53")
+		},
+	}
+
+	dialer := &net.Dialer{
+		Timeout:   15 * time.Second,
+		KeepAlive: 30 * time.Second,
+		Resolver:  resolver,
+	}
+
+	dg.Client = &http.Client{
+		Transport: &http.Transport{
+			Proxy:               http.ProxyFromEnvironment,
+			DialContext:         dialer.DialContext,
+			ForceAttemptHTTP2:   true,
+			TLSHandshakeTimeout: 15 * time.Second,
+		},
+		Timeout: 30 * time.Second,
+	}
+	dg.Dialer = &websocket.Dialer{
+		Proxy:            http.ProxyFromEnvironment,
+		NetDialContext:   dialer.DialContext,
+		HandshakeTimeout: 20 * time.Second,
+	}
+}
+
 func main() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
 	if token == "" {
@@ -304,8 +356,17 @@ func main() {
 		}
 	})
 
+	log.Printf("connecting to Discord...")
 	if err := dg.Open(); err != nil {
-		log.Fatalf("failed to connect to Discord: %v", err)
+		if isDNSError(err) {
+			log.Printf("system DNS failed; retrying with fallback DNS (1.1.1.1 / 8.8.8.8)")
+			applyFallbackDNS(dg)
+			if retryErr := dg.Open(); retryErr != nil {
+				log.Fatalf("failed to connect to Discord after DNS fallback: %v", retryErr)
+			}
+		} else {
+			log.Fatalf("failed to connect to Discord: %v", err)
+		}
 	}
 	defer dg.Close()
 
