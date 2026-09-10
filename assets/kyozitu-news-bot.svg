@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="707" viewBox="0 0 1536 707">
+  <rect width="1536" height="707" fill="#1f1d17"/>
+  <rect x="0" y="0" width="6" height="707" fill="#f0b232"/>
+  <circle cx="101" cy="72" r="62" fill="#36a65d"/>
+  <path d="M66 56c9-7 19-10 35-10s26 3 35 10c7 10 12 24 13 39-10 7-19 10-28 12l-7-10c6-2 11-5 15-8-14 7-41 7-56 0 5 4 10 6 16 8l-7 10c-10-2-19-5-28-12 1-15 6-29 12-39zm22 30c6 0 10-5 10-12s-4-12-10-12-10 5-10 12 4 12 10 12zm27 0c6 0 10-5 10-12s-4-12-10-12-10 5-10 12 4 12 10 12z" fill="#fff"/>
+  <text x="205" y="70" fill="#f5f5f5" font-family="sans-serif" font-size="48" font-weight="700">虚実ニュースbot</text>
+  <rect x="588" y="14" rx="13" ry="13" width="140" height="62" fill="#5865f2"/>
+  <text x="611" y="60" fill="#fff" font-family="sans-serif" font-size="38" font-weight="700">アプリ</text>
+  <text x="752" y="65" fill="#a7a59e" font-family="sans-serif" font-size="36">14:16</text>
+
+  <text x="205" y="142" fill="#f5f5f5" font-family="sans-serif" font-size="45" font-weight="700">【虚実ニュース・社会】</text>
+  <text x="205" y="215" fill="#f5f5f5" font-family="sans-serif" font-size="44" font-weight="700">本日午後、</text>
+  <rect x="452" y="160" rx="7" ry="7" width="248" height="68" fill="#49456f"/>
+  <text x="468" y="211" fill="#c7c7ff" font-family="sans-serif" font-size="43" font-weight="700">@れくしー</text>
+  <text x="715" y="215" fill="#f5f5f5" font-family="sans-serif" font-size="44" font-weight="700">が階段を一段飛ばしで移動したこ</text>
+  <text x="205" y="285" fill="#f5f5f5" font-family="sans-serif" font-size="44" font-weight="700">とが判明し、現行犯逮捕されました。</text>
+
+  <text x="205" y="440" fill="#f5f5f5" font-family="sans-serif" font-size="43" font-weight="700">- この1件による実害は今のところ確認されていません。</text>
+
+  <text x="205" y="585" fill="#f5f5f5" font-family="sans-serif" font-size="43" font-weight="700">※このニュースは完全なフィクションです。実在の人物・</text>
+  <text x="205" y="650" fill="#f5f5f5" font-family="sans-serif" font-size="43" font-weight="700">事件・処分とは関係ありません。</text>
+</svg>
