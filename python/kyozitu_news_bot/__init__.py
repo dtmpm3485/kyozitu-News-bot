@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 __all__ = ["run"]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 _REPO = "dtmpm3485/kyozitu-News-bot"
 
@@ -21,8 +21,12 @@ def _target() -> tuple[str, str, str]:
     system = platform.system().lower()
     machine = platform.machine().lower()
 
+    # Termux reports Android/aarch64. The bot binary is built with
+    # CGO_ENABLED=0, so Android/Termux can use the Linux binary for the
+    # matching CPU architecture.
     os_map = {
         "linux": "linux",
+        "android": "linux",
         "windows": "windows",
         "darwin": "darwin",
     }
