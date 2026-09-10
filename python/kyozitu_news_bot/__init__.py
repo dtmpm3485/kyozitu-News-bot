@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 __all__ = ["run"]
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 _REPO = "dtmpm3485/kyozitu-News-bot"
 
@@ -42,6 +42,8 @@ def _target() -> tuple[str, str, str]:
     goarch = arch_map.get(machine)
     if goos is None or goarch is None:
         raise RuntimeError(f"Unsupported platform: {system}/{machine}")
+    if goos == "android" and goarch != "arm64":
+        raise RuntimeError(f"Unsupported Android architecture: {machine}")
 
     suffix = ".exe" if goos == "windows" else ""
     return goos, goarch, suffix
