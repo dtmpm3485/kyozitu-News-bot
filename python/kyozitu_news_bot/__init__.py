@@ -12,18 +12,19 @@ import urllib.request
 from pathlib import Path
 
 __all__ = ["run"]
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 _REPO = "dtmpm3485/kyozitu-News-bot"
+
+
+def _status(message: str) -> None:
+    print(f"kyozitu-news-bot: {message}", file=sys.stderr, flush=True)
 
 
 def _target() -> tuple[str, str, str]:
     system = platform.system().lower()
     machine = platform.machine().lower()
 
-    # Termux reports Android/aarch64. Android requires a PIE executable,
-    # so releases provide a dedicated GOOS=android binary instead of
-    # reusing the normal Linux binary.
     os_map = {
         "linux": "linux",
         "android": "android",
@@ -84,6 +85,7 @@ def _resolve_binary() -> Path:
     cache = _cache_dir()
     binary = cache / asset
     if binary.exists():
+        _status(f"using cached {goos}/{goarch} binary")
         return binary
 
     cache.mkdir(parents=True, exist_ok=True)
@@ -91,8 +93,10 @@ def _resolve_binary() -> Path:
     base = f"https://github.com/{_REPO}/releases/download/{tag}"
     tmp = binary.with_suffix(binary.suffix + ".download")
 
+    _status(f"downloading {goos}/{goarch} binary (first launch only)...")
     try:
         _download(f"{base}/{asset}", tmp)
+        _status("verifying download...")
         req = urllib.request.Request(
             f"{base}/checksums.txt",
             headers={"User-Agent": f"kyozitu-news-bot/{__version__}"},
@@ -118,6 +122,7 @@ def _resolve_binary() -> Path:
 
     if goos != "windows":
         binary.chmod(binary.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    _status("binary ready")
     return binary
 
 
@@ -132,7 +137,9 @@ def run(token: str | None = None) -> int:
             "  run(\"YOUR_BOT_TOKEN\")"
         )
 
+    _status(f"starting v{__version__}...")
     binary = _resolve_binary()
+    _status("launching Go bot...")
     try:
         return subprocess.call([str(binary)], env=os.environ.copy())
     except KeyboardInterrupt:
