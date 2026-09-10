@@ -4,9 +4,34 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 0.1.0)"
+        required: true
+        default: "0.1.0"
 
 jobs:
+  create-tag:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create release tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
   build-go:
+    if: github.event_name == 'push'
     name: Go ${{ matrix.goos }}/${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
@@ -49,6 +74,7 @@ jobs:
           path: dist/*
 
   github-release:
+    if: github.event_name == 'push'
     name: GitHub Release
     needs: build-go
     runs-on: ubuntu-latest
@@ -70,6 +96,7 @@ jobs:
         run: gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --generate-notes --verify-tag
 
   build-python:
+    if: github.event_name == 'push'
     name: Build PyPI package
     runs-on: ubuntu-latest
     steps:
@@ -85,6 +112,7 @@ jobs:
           path: dist/*
 
   pypi:
+    if: github.event_name == 'push'
     name: Publish to PyPI
     needs: [github-release, build-python]
     runs-on: ubuntu-latest
